@@ -145,6 +145,85 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://kin9l.github.io/2022/04/10/PPO/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="L">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Richard Liu">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/04/10/PPO/" class="post-title-link" itemprop="url">PPO</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2022-04-10 10:11:32" itemprop="dateCreated datePublished" datetime="2022-04-10T10:11:32+08:00">2022-04-10</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2022-05-03 14:52:19" itemprop="dateModified" datetime="2022-05-03T14:52:19+08:00">2022-05-03</time>
+              </span>
+
+          
+            <span id="/2022/04/10/PPO/" class="post-meta-item leancloud_visitors" data-flag-title="PPO" title="Views">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">Views: </span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p><code>PPO</code> is a kind of <code>actor-critic-based</code> reinforcement learning algorithm. There are many variants of the <code>PPO</code> with different objective functions such as <code>PPO</code> with surrogate objective, <code>PPO</code> with constrained surrogate objective, <code>PPO</code> with KL penalty, and <code>PPO</code> with clipping. In this article, we only introduce the <code>PPO</code> with clipping.</p>
+<h3 id="Actor"><a href="#Actor" class="headerlink" title="Actor"></a>Actor</h3><p>Usually, the <code>policy-based</code> RL can be used to sample <code>actions</code> according to the current environment state. We can use a neural network $\pi_{\theta}$ which is parameterized by $\theta$ to approximate the policy. How can we evaluate the performance of the <code>actor</code>?</p>
+<p>In <code>actor-critic-based</code> RL, we use the <code>advantage</code> function to evalute the performance of the <code>action</code>, as it is shown in <strong>Eq. (1)</strong>. The <code>advantage</code> function can evaluate that how better the <code>action</code> $a_t$ in <code>state</code> $s_t$ is than the average performance of <code>actions</code> in <code>state</code> $s_t$.  </p>
+<script type="math/tex; mode=display">\begin{align}A^{\pi}_{\theta}(s_t,a_t)=Q_{\theta}(s_t,a_t)-V_{\theta}(s_t)\tag{1}\end{align}</script><p>Actually, the $Q$ value can be estimated from the $V$ value, as shown in <strong>Eq. (2)</strong>. Then the <code>advantage</code> function can be calculated by <strong>Eq. (3)</strong>.</p>
+<script type="math/tex; mode=display">\begin{align} Q(s_t,a_t)&=E_{\tau\sim\pi}[r_t+\gamma{r_{t+1}}+\gamma{^2}r_{t+2}+\gamma^3r_{t+3}+\cdots+\gamma^{n}r_{t+n}]+\gamma^{t+n+1}V(s_{t+n+1})\\&\approx{r_t+\gamma{r_{t+1}}+\gamma{^2}r_{t+2}+\gamma^3r_{t+3}+\cdots+\gamma^{n}r_{t+n}+\gamma^{t+n+1}V(s_{t+n+1})}\tag{2} \end{align}</script><script type="math/tex; mode=display">\begin{align}A_\theta^{\pi}(s_t,a_t)\approx{r_t+\gamma{r_{t+1}}+\gamma{^2}r_{t+2}+\gamma^3r_{t+3}+\cdots+\gamma^{n}r_{t+n}+\gamma^{t+n+1}V_\theta(s_{t+n+1})-V_\theta(s_t)}\tag{3}\end{align}</script><p><strong>Eq. (3)</strong> is known as the <code>n-step estimation</code>. Besides, the <code>advantage</code> function can also be calculated by using the <code>Generalized Advantage Estimation (GAE)</code>, as shown in <strong>Eq. (4)</strong>. Actually, the <strong>GAE</strong> is an exponentially weighted average of all of the <code>n-step estimation</code> advantages. </p>
+<script type="math/tex; mode=display">\begin{align}A_{GAE}^{\pi}(s_t,a_t)&=\sum_{l=0}^{\infty}(\gamma\lambda)^l\delta_{t+l}\\&where\quad\delta_t=r_t+\gamma{V^{\pi}(s_{t+1})}-V^{\pi}(s_t)\tag{4}\end{align}</script><p>The <code>actor</code> uses the following objective function, as shown in <strong>Eq. (5)</strong>. The definition of $r<em>t(\theta)$ is shown in <strong>Eq. (6)</strong>. This objective function uses the <code>importance sampling</code> method to optimize parameter $\theta$ with the data generated by the old policy $$\pi</em>{\theta{old}}$$. Besides, <code>PPO</code> uses a <code>clipping</code> method to avoid the new policy $\pi<em>{\theta}$ and the old policy $\pi</em>{\theta{old}}$ becoming too different, as it is shown in <strong>Eq. (7)</strong>. The item $\beta{H}$ represents the entropies of the <code>policy distribution</code>. It can be used to denote how uniform the <code>policy distribution</code> is. A more uniform <code>policy distribution</code> is helpful to generate actions with good diversity.</p>
+<script type="math/tex; mode=display">\begin{align}J(\theta)=E_{t}[r_t(\theta)A_t^{\pi_{\theta{old}}}]\tag{5}\end{align}</script><script type="math/tex; mode=display">\begin{align}r_t(\theta)=\frac{\pi_\theta(a_t|s_t)}{\pi_{\theta{old}}(a_t|s_t)}\tag{6}\end{align}</script><script type="math/tex; mode=display">\begin{align}J(\theta)^{clip}=E_t[min(r_t(\theta)A_t^{\pi_\theta{old}},clip(r_t(\theta),1-\epsilon,1+\epsilon)A_t^{\pi_\theta{old}})]-\beta{H}\tag{7}\end{align}</script><h3 id="Critic"><a href="#Critic" class="headerlink" title="Critic"></a>Critic</h3><p>The <code>critic</code> is used to evaluate the performance of the <code>actor</code> based on the $V$ value  of the state <script type="math/tex">s_t</script>, termed as <script type="math/tex">V(s_t)</script>. Literally, the $V$ value is used to evaluate  how good the <code>state</code> <script type="math/tex">s_t</script> is. However, the <code>actor</code>‘s actions can make one <code>state</code> transform into another <code>state</code>. Therefore, the $V$ value can indicate the performance of the <code>actor</code>. Similarly, the <code>critic</code> can also use a neural network to approximate the $V$ value, termed as <script type="math/tex">V_{\theta}</script>. The <code>critic</code> can use the <code>mean square error</code> (<strong>MSE</strong>)  to optimize the parameter <script type="math/tex">\theta</script>. The <strong>MSE</strong> is calculated between the estimation of the $V$ value termed as <script type="math/tex">V_{\theta}^{target}</script> and the output of the neural network termed as $V<em>{\theta}$. The $$V</em>{\theta}^{target}$$ can be calculated according to the <code>Advantage</code> function, as it is shown in <strong>Eq. (8)</strong>. We can use  <strong>Eq. (9)</strong> as the <code>critic</code>‘s objective function.</p>
+<script type="math/tex; mode=display">\begin{align} V_{\theta}^{target}(s_t)=A_{\theta}(s_t, a_t)+V_{\theta}(s_t)\tag{8}\end{align}</script><script type="math/tex; mode=display">\begin{align}J(\theta)=\frac{1}{T}\sum_{t=0}^{T}(V_{\theta}^{target}(s_t)-V_{\theta}(s_t))^2\tag{9}\end{align}</script><p>An implementation of <code>PPO</code> with clipping is <a target="_blank" rel="noopener" href="https://github.com/Kin9L/ReinforcementLearning/blob/master/PPO/PPO_discrete.py">here</a>.</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://kin9l.github.io/2022/03/26/Reinforce-Algorithm/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -282,6 +361,17 @@
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
   <p class="site-author-name" itemprop="name">L</p>
   <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">2</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+  </nav>
 </div>
 
 
