@@ -2,9 +2,9 @@ name: ci
 
 on:
   push:
-    branches: [main]
+    branches: [astro-blog]
   pull_request:
-    branches: [main]
+    branches: [astro-blog]
 
 permissions:
   contents: read
